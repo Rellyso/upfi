@@ -20,23 +20,28 @@ export default function Home(): JSX.Element {
     'images',
     // TODO AXIOS REQUEST WITH PARAM
     async ({ pageParam = null }) => {
-      let queryString = 'api/images'
-      if (pageParam) {
-        queryString += '?after=' + pageParam
-      }
+      const { data } = await api.get('api/images', {
+        params: {
+          after: pageParam,
+        }
+      });
 
-      return await api.get(queryString)
+      return data;
     }
     ,
     // TODO GET AND RETURN NEXT PAGE PARAM
-    { getNextPageParam: (lastPage, pages) => lastPage.data || null }
+    { getNextPageParam: (lastPage, pages) => lastPage?.after || null }
   );
 
   const formattedData = useMemo(() => {
     // TODO FORMAT AND FLAT DATA ARRAY
-    console.log(data)
+    const formatted = data?.pages.flatMap(imageData => {
+      return imageData.data.flat();
+    });
 
-    return data?.pages.map(page => page.data)
+    console.log(formatted);
+
+    return formatted
   }, [data]);
 
   // TODO RENDER LOADING SCREEN
@@ -52,6 +57,11 @@ export default function Home(): JSX.Element {
       <Box maxW={1120} px={20} mx="auto" my={20}>
         <CardList cards={formattedData} />
         {/* TODO RENDER LOAD MORE BUTTON IF DATA HAS NEXT PAGE */}
+        {hasNextPage &&
+          <Button mt="4" onClick={() => fetchNextPage()} disabled={!hasNextPage}>
+            {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
+          </Button>
+        }
       </Box>
     </>
   );
